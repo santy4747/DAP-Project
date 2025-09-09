@@ -120,8 +120,9 @@
         // Load EDA charts on page load
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                const response = await fetch('/.netlify/functions/app/api/eda');
-                if (!response.ok) throw new Error('Failed to load EDA data');
+                // FIX: Use the short, redirected path for the API call.
+                const response = await fetch('/api/eda');
+                if (!response.ok) throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
                 const data = await response.json();
                 
                 document.getElementById('grade-distribution-chart').innerHTML = `<img src="data:image/png;base64,${data.grade_distribution}" alt="Distribution of Final Grades">`;
@@ -132,7 +133,7 @@
 
             } catch (error) {
                 console.error("EDA Load Error:", error);
-                document.getElementById('eda-section').innerHTML = '<p class="text-center text-red-500">Could not load analytical charts.</p>';
+                document.getElementById('eda-section').innerHTML = '<p class="text-center text-red-500">Could not load analytical charts. Check the function logs in your Netlify dashboard for backend errors.</p>';
             }
         });
 
@@ -149,14 +150,14 @@
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
             
-            // Add other necessary fields with default/median values for a complete prediction
             Object.assign(data, {
                 'Fedu': 2, 'goout': 3, 'Dalc': 1, 'Walc': 2, 'health': 3,
                 'schoolsup': 'no', 'famsup': 'yes'
             });
 
             try {
-                const response = await fetch('/.netlify/functions/app/api/predict', {
+                // FIX: Use the short, redirected path for the API call.
+                const response = await fetch('/api/predict', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
