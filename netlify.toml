@@ -1,0 +1,13 @@
+[build]
+  # This command tells Netlify to install the Python packages.
+  command = "pip install -r requirements.txt"
+  # This is where your serverless functions are located.
+  functions = "netlify/functions/"
+  # This is where your static frontend files are.
+  publish = "static/"
+
+# This sets up the redirect so that a clean URL can be used for the API.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/app/:splat"
+  status = 200
