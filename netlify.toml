@@ -1,10 +1,10 @@
 [build]
   command = "pip install -r requirements.txt"
-  publish = "."  # Changed from "static" - publishes from root
+  publish = "."
   functions = "netlify/functions"
 
 [functions]
-  included_files = ["netlify/functions/student_performance_model.pkl"]
+  included_files = ["netlify/functions/app.py"]
 
 [[redirects]]
   from = "/api/*"
