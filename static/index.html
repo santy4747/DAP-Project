@@ -10,6 +10,7 @@
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
         .chart-container { min-height: 400px; display: flex; align-items: center; justify-content: center; }
+        .error-box { background-color: #fee2e2; border-left: 4px solid #ef4444; color: #b91c1c; padding: 1rem; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -25,7 +26,7 @@
         <!-- EDA SECTION -->
         <section id="eda-section" class="mb-12">
             <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Exploratory Data Analysis</h2>
-            <div class="space-y-10">
+            <div id="eda-charts-container" class="space-y-10">
                 <!-- Chart 1: Grade Distribution -->
                 <div class="card p-6">
                     <h3 class="text-xl font-semibold mb-4 text-center">How are final grades distributed?</h3>
@@ -44,14 +45,12 @@
                     <div id="studytime-impact-chart" class="chart-container"><p class="text-gray-500">Loading chart...</p></div>
                      <p class="text-center mt-4 text-gray-600">Yes, but with diminishing returns. There's a noticeable improvement from studying less than 2 hours to 2-5 hours. The benefit of studying more than 5 hours is less pronounced.</p>
                 </div>
-
                 <!-- Chart 4: Mother's Education Impact -->
                 <div class="card p-6">
                      <h3 class="text-xl font-semibold mb-4 text-center">How does mother's education influence grades?</h3>
                     <div id="medu-impact-chart" class="chart-container"><p class="text-gray-500">Loading chart...</p></div>
                      <p class="text-center mt-4 text-gray-600">There is a clear positive trend. Students whose mothers have higher education consistently achieve higher median grades, highlighting the importance of the home learning environment.</p>
                 </div>
-
                 <!-- Chart 5: Alcohol Impact -->
                 <div class="card p-6">
                      <h3 class="text-xl font-semibold mb-4 text-center">What is the impact of alcohol consumption?</h3>
@@ -67,7 +66,7 @@
             <div class="card w-full max-w-2xl p-8 mx-auto">
                 <form id="prediction-form">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                        <!-- Inputs matching the model's top features -->
+                        <!-- Inputs -->
                         <div>
                             <label for="G2" class="block text-sm font-medium text-gray-700">Second Period Grade (G2)</label>
                             <input type="number" name="G2" id="G2" required min="0" max="20" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="0-20">
@@ -87,20 +86,13 @@
                          <div>
                             <label for="Medu" class="block text-sm font-medium text-gray-700">Mother's Education</label>
                             <select id="Medu" name="Medu" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                <option value="4">Higher Education</option>
-                                <option value="3">Secondary</option>
-                                <option value="2">5th-9th grade</option>
-                                <option value="1">Primary</option>
-                                <option value="0">None</option>
+                                <option value="4">Higher Education</option><option value="3">Secondary</option><option value="2">5th-9th grade</option><option value="1">Primary</option><option value="0">None</option>
                             </select>
                         </div>
                         <div>
                             <label for="studytime" class="block text-sm font-medium text-gray-700">Weekly Study Time</label>
                              <select id="studytime" name="studytime" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                <option value="4">> 10 hours</option>
-                                <option value="3">5 to 10 hours</option>
-                                <option value="2">2 to 5 hours</option>
-                                <option value="1">< 2 hours</option>
+                                <option value="4">&gt; 10 hours</option><option value="3">5 to 10 hours</option><option value="2">2 to 5 hours</option><option value="1">&lt; 2 hours</option>
                             </select>
                         </div>
                     </div>
@@ -117,12 +109,16 @@
     </main>
 
     <script>
-        // Load EDA charts on page load
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                // FIX: Use the short, redirected path for the API call.
                 const response = await fetch('/api/eda');
-                if (!response.ok) throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+                
+                // Better error handling: Check response before trying to parse JSON
+                if (!response.ok) {
+                    const errorData = await response.json(); // Try to get the detailed error from the backend
+                    throw new Error(errorData.error || `Server responded with status: ${response.status}`);
+                }
+                
                 const data = await response.json();
                 
                 document.getElementById('grade-distribution-chart').innerHTML = `<img src="data:image/png;base64,${data.grade_distribution}" alt="Distribution of Final Grades">`;
@@ -133,7 +129,13 @@
 
             } catch (error) {
                 console.error("EDA Load Error:", error);
-                document.getElementById('eda-section').innerHTML = '<p class="text-center text-red-500">Could not load analytical charts. Check the function logs in your Netlify dashboard for backend errors.</p>';
+                const edaContainer = document.getElementById('eda-charts-container');
+                edaContainer.innerHTML = `
+                    <div class="error-box">
+                        <p class="font-bold">Could not load analytical charts.</p>
+                        <p class="mt-2"><strong>Reason:</strong> ${error.message}</p>
+                        <p class="mt-2 text-sm">This usually means the backend function failed. Please check the 'Functions' tab in your Netlify dashboard for error logs.</p>
+                    </div>`;
             }
         });
 
@@ -156,17 +158,12 @@
             });
 
             try {
-                // FIX: Use the short, redirected path for the API call.
                 const response = await fetch('/api/predict', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                const contentType = response.headers.get("content-type");
-                if (!contentType || !contentType.includes("application/json")) {
-                    const responseText = await response.text();
-                    throw new Error(`Received non-JSON response from server: ${responseText}`);
-                }
+                
                 if (!response.ok) {
                     const error = await response.json();
                     throw new Error(error.error || `HTTP error! status: ${response.status}`);
@@ -174,9 +171,10 @@
                 const result = await response.json();
                 predictionResult.textContent = result.prediction;
                 resultContainer.classList.remove('hidden');
+
             } catch (error) {
                 console.error('Detailed Error:', error);
-                alert(`An error occurred: ${error.message}`);
+                alert(`Prediction Failed: ${error.message}`);
             } finally {
                 submitButton.disabled = false;
                 submitButton.textContent = 'Predict Final Grade';
