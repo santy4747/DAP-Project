@@ -3,129 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Expectancy Estimator</title>
+    <title>Student Performance Analysis & Estimator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        .chart-container { min-height: 400px; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body class="text-gray-800">
 
-    <!-- Header -->
     <header class="bg-white shadow-sm">
         <div class="container mx-auto px-6 py-6 text-center">
-            <h1 class="text-4xl font-bold text-gray-900">Life Expectancy Estimator</h1>
-            <p class="mt-2 text-lg text-gray-600">Enter a country's health and economic data to get a live prediction from our ML model.</p>
+            <h1 class="text-4xl font-bold text-gray-900">Student Performance Analysis</h1>
+            <p class="mt-2 text-lg text-gray-600">Exploring the factors that drive success and predicting future outcomes.</p>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="container mx-auto px-6 py-10 flex justify-center">
-        <div class="card w-full max-w-2xl p-8">
-            <form id="prediction-form">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                    <!-- These inputs should correspond to your model's features -->
-                    <div>
-                        <label for="adult_mortality" class="block text-sm font-medium text-gray-700">Adult Mortality Rate</label>
-                        <input type="number" name="adult_mortality" id="adult_mortality" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., 150">
-                    </div>
-                     <div>
-                        <label for="income_composition_of_resources" class="block text-sm font-medium text-gray-700">Income Comp. of Resources (HDI)</label>
-                        <input type="number" step="0.01" name="income_composition_of_resources" id="income_composition_of_resources" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., 0.75">
-                    </div>
-                    <div>
-                        <label for="hiv/aids" class="block text-sm font-medium text-gray-700">HIV/AIDS Deaths (per 1000 live births)</label>
-                        <input type="number" step="0.1" name="hiv/aids" id="hiv/aids" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., 0.1">
-                    </div>
-                     <div>
-                        <label for="schooling" class="block text-sm font-medium text-gray-700">Years of Schooling</label>
-                        <input type="number" step="0.1" name="schooling" id="schooling" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., 14.5">
-                    </div>
-                    <div>
-                        <label for="gdp" class="block text-sm font-medium text-gray-700">GDP per capita (USD)</label>
-                        <input type="number" name="gdp" id="gdp" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., 12000">
-                    </div>
-                    <div>
-                        <label for="status" class="block text-sm font-medium text-gray-700">Country Status</label>
-                        <select id="status" name="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                            <option>Developing</option>
-                            <option>Developed</option>
-                        </select>
-                    </div>
+    <main class="container mx-auto px-6 py-10">
+        <!-- EDA SECTION -->
+        <section id="eda-section" class="mb-12">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Exploratory Data Analysis</h2>
+            <div class="space-y-10">
+                <!-- Chart 1: Grade Distribution -->
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-center">How are final grades distributed?</h3>
+                    <div id="grade-distribution-chart" class="chart-container"><p class="text-gray-500">Loading chart...</p></div>
+                    <p class="text-center mt-4 text-gray-600">This histogram shows that most students achieve grades between 8 and 16, with a significant number scoring a 10. Very few students achieve a perfect 20.</p>
                 </div>
-                
-                <button type="submit" id="submit-button" class="mt-8 w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition duration-300">
-                    Estimate Life Expectancy
-                </button>
-            </form>
+                <!-- Chart 2: Failures Impact -->
+                <div class="card p-6">
+                     <h3 class="text-xl font-semibold mb-4 text-center">Do past failures affect future grades?</h3>
+                    <div id="failures-impact-chart" class="chart-container"><p class="text-gray-500">Loading chart...</p></div>
+                    <p class="text-center mt-4 text-gray-600">Absolutely. The box plot clearly indicates that students with zero past failures have a much higher median grade. The grade distribution drops significantly with each past failure.</p>
+                </div>
+                <!-- Chart 3: Study Time Impact -->
+                <div class="card p-6">
+                     <h3 class="text-xl font-semibold mb-4 text-center">Does more study time lead to better grades?</h3>
+                    <div id="studytime-impact-chart" class="chart-container"><p class="text-gray-500">Loading chart...</p></div>
+                     <p class="text-center mt-4 text-gray-600">Yes, but with diminishing returns. There's a noticeable improvement from studying less than 2 hours to 2-5 hours. The benefit of studying more than 5 hours is less pronounced.</p>
+                </div>
 
-            <!-- Result Display -->
-            <div id="result-container" class="mt-8 text-center hidden">
-                 <p class="text-lg text-gray-600">Predicted Life Expectancy:</p>
-                 <p id="prediction-result" class="text-5xl font-bold text-indigo-600"></p>
-                 <p class="text-gray-500 mt-1">years</p>
+                <!-- Chart 4: Mother's Education Impact -->
+                <div class="card p-6">
+                     <h3 class="text-xl font-semibold mb-4 text-center">How does mother's education influence grades?</h3>
+                    <div id="medu-impact-chart" class="chart-container"><p class="text-gray-500">Loading chart...</p></div>
+                     <p class="text-center mt-4 text-gray-600">There is a clear positive trend. Students whose mothers have higher education consistently achieve higher median grades, highlighting the importance of the home learning environment.</p>
+                </div>
+
+                <!-- Chart 5: Alcohol Impact -->
+                <div class="card p-6">
+                     <h3 class="text-xl font-semibold mb-4 text-center">What is the impact of alcohol consumption?</h3>
+                    <div id="alcohol-impact-chart" class="chart-container"><p class="text-gray-500">Loading chart...</p></div>
+                     <p class="text-center mt-4 text-gray-600">A strong negative correlation is visible. As total weekly alcohol consumption increases, the median final grade and the overall grade distribution trend downwards significantly.</p>
+                </div>
             </div>
-        </div>
+        </section>
+
+        <!-- PREDICTOR SECTION -->
+        <section id="predictor-section">
+             <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Predictive Tool</h2>
+            <div class="card w-full max-w-2xl p-8 mx-auto">
+                <form id="prediction-form">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                        <!-- Inputs matching the model's top features -->
+                        <div>
+                            <label for="G2" class="block text-sm font-medium text-gray-700">Second Period Grade (G2)</label>
+                            <input type="number" name="G2" id="G2" required min="0" max="20" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="0-20">
+                        </div>
+                        <div>
+                            <label for="G1" class="block text-sm font-medium text-gray-700">First Period Grade (G1)</label>
+                            <input type="number" name="G1" id="G1" required min="0" max="20" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="0-20">
+                        </div>
+                        <div>
+                            <label for="failures" class="block text-sm font-medium text-gray-700">Past Failures</label>
+                            <input type="number" name="failures" id="failures" required min="0" max="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="0-4">
+                        </div>
+                        <div>
+                            <label for="absences" class="block text-sm font-medium text-gray-700">School Absences</label>
+                            <input type="number" name="absences" id="absences" required min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., 4">
+                        </div>
+                         <div>
+                            <label for="Medu" class="block text-sm font-medium text-gray-700">Mother's Education</label>
+                            <select id="Medu" name="Medu" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="4">Higher Education</option>
+                                <option value="3">Secondary</option>
+                                <option value="2">5th-9th grade</option>
+                                <option value="1">Primary</option>
+                                <option value="0">None</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="studytime" class="block text-sm font-medium text-gray-700">Weekly Study Time</label>
+                             <select id="studytime" name="studytime" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="4">> 10 hours</option>
+                                <option value="3">5 to 10 hours</option>
+                                <option value="2">2 to 5 hours</option>
+                                <option value="1">< 2 hours</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="submit-button" class="mt-8 w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700">Predict Final Grade</button>
+                </form>
+                <div id="result-container" class="mt-8 text-center hidden">
+                     <p class="text-lg text-gray-600">Predicted Final Grade (G3):</p>
+                     <p id="prediction-result" class="text-5xl font-bold text-indigo-600"></p>
+                     <p class="text-gray-500 mt-1">out of 20</p>
+                </div>
+            </div>
+        </section>
     </main>
 
     <script>
+        // Load EDA charts on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/.netlify/functions/app/api/eda');
+                if (!response.ok) throw new Error('Failed to load EDA data');
+                const data = await response.json();
+                
+                document.getElementById('grade-distribution-chart').innerHTML = `<img src="data:image/png;base64,${data.grade_distribution}" alt="Distribution of Final Grades">`;
+                document.getElementById('failures-impact-chart').innerHTML = `<img src="data:image/png;base64,${data.failures_impact}" alt="Impact of Failures on Grade">`;
+                document.getElementById('studytime-impact-chart').innerHTML = `<img src="data:image/png;base64,${data.studytime_impact}" alt="Impact of Study Time on Grade">`;
+                document.getElementById('medu-impact-chart').innerHTML = `<img src="data:image/png;base64,${data.medu_impact}" alt="Impact of Mother's Education on Grade">`;
+                document.getElementById('alcohol-impact-chart').innerHTML = `<img src="data:image/png;base64,${data.alcohol_impact}" alt="Impact of Alcohol Consumption on Grade">`;
+
+            } catch (error) {
+                console.error("EDA Load Error:", error);
+                document.getElementById('eda-section').innerHTML = '<p class="text-center text-red-500">Could not load analytical charts.</p>';
+            }
+        });
+
+        // PREDICTION FORM SCRIPT
         const form = document.getElementById('prediction-form');
         const resultContainer = document.getElementById('result-container');
         const predictionResult = document.getElementById('prediction-result');
         const submitButton = document.getElementById('submit-button');
-
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            // Show loading state
             submitButton.disabled = true;
             submitButton.textContent = 'Calculating...';
             resultContainer.classList.add('hidden');
-
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-
-            // Convert string numbers to actual numbers
-            for (const key in data) {
-                if (!isNaN(data[key]) && data[key] !== '') {
-                    data[key] = parseFloat(data[key]);
-                }
-            }
             
-            // NOTE: Add other features with default values if they are not in the form
-            // but are required by the model. For this example, we assume the form is complete.
+            // Add other necessary fields with default/median values for a complete prediction
+            Object.assign(data, {
+                'Fedu': 2, 'goout': 3, 'Dalc': 1, 'Walc': 2, 'health': 3,
+                'schoolsup': 'no', 'famsup': 'yes'
+            });
 
             try {
-                // The API endpoint path is determined by the folder structure
                 const response = await fetch('/.netlify/functions/app/api/predict', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const responseText = await response.text();
+                    throw new Error(`Received non-JSON response from server: ${responseText}`);
+                }
                 if (!response.ok) {
                     const error = await response.json();
                     throw new Error(error.error || `HTTP error! status: ${response.status}`);
                 }
-
                 const result = await response.json();
                 predictionResult.textContent = result.prediction;
                 resultContainer.classList.remove('hidden');
-
             } catch (error) {
-                console.error('Error:', error);
-                predictionResult.textContent = 'Error';
-                resultContainer.classList.remove('hidden');
+                console.error('Detailed Error:', error);
                 alert(`An error occurred: ${error.message}`);
             } finally {
-                // Restore button state
                 submitButton.disabled = false;
-                submitButton.textContent = 'Estimate Life Expectancy';
+                submitButton.textContent = 'Predict Final Grade';
             }
         });
     </script>
-
 </body>
 </html>
+

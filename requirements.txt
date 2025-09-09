@@ -1,6 +1,8 @@
+flask
 pandas
 scikit-learn
+seaborn
+matplotlib
 joblib
-Flask
 serverless-wsgi
 numpy
