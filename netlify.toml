@@ -1,10 +1,15 @@
 [build]
   command = "pip install -r requirements.txt"
-  functions = "netlify/functions"
   publish = "static"
+  functions = "netlify/functions"
 
+# This new section explicitly configures your function
+[functions]
+  # This ensures the model file is always included with the function
+  included_files = ["netlify/functions/student_performance_model.pkl"]
+
+# The redirect rule remains the same
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/app/api/:splat"
+  to = "/.netlify/functions/app/:splat"
   status = 200
-
