@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -23,35 +23,29 @@
     </header>
 
     <main class="container mx-auto px-6 py-10">
-        <!-- EDA SECTION -->
         <section id="eda-section" class="mb-12">
             <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Exploratory Data Analysis</h2>
             <div id="eda-charts-container" class="space-y-10">
-                <!-- Chart 1: Grade Distribution -->
                 <div class="card p-6">
                     <h3 class="text-xl font-semibold mb-4 text-center">How are final grades distributed?</h3>
                     <div id="grade-distribution-chart" class="chart-container"><p class="text-gray-500">Loading chart...</p></div>
                     <p class="text-center mt-4 text-gray-600">This histogram shows that most students achieve grades between 8 and 16, with a significant number scoring a 10. Very few students achieve a perfect 20.</p>
                 </div>
-                <!-- Chart 2: Failures Impact -->
                 <div class="card p-6">
                      <h3 class="text-xl font-semibold mb-4 text-center">Do past failures affect future grades?</h3>
                     <div id="failures-impact-chart" class="chart-container"><p class="text-gray-500">Loading chart...</p></div>
                     <p class="text-center mt-4 text-gray-600">Absolutely. The box plot clearly indicates that students with zero past failures have a much higher median grade. The grade distribution drops significantly with each past failure.</p>
                 </div>
-                <!-- Chart 3: Study Time Impact -->
                 <div class="card p-6">
                      <h3 class="text-xl font-semibold mb-4 text-center">Does more study time lead to better grades?</h3>
                     <div id="studytime-impact-chart" class="chart-container"><p class="text-gray-500">Loading chart...</p></div>
                      <p class="text-center mt-4 text-gray-600">Yes, but with diminishing returns. There's a noticeable improvement from studying less than 2 hours to 2-5 hours. The benefit of studying more than 5 hours is less pronounced.</p>
                 </div>
-                <!-- Chart 4: Mother's Education Impact -->
                 <div class="card p-6">
                      <h3 class="text-xl font-semibold mb-4 text-center">How does mother's education influence grades?</h3>
                     <div id="medu-impact-chart" class="chart-container"><p class="text-gray-500">Loading chart...</p></div>
                      <p class="text-center mt-4 text-gray-600">There is a clear positive trend. Students whose mothers have higher education consistently achieve higher median grades, highlighting the importance of the home learning environment.</p>
                 </div>
-                <!-- Chart 5: Alcohol Impact -->
                 <div class="card p-6">
                      <h3 class="text-xl font-semibold mb-4 text-center">What is the impact of alcohol consumption?</h3>
                     <div id="alcohol-impact-chart" class="chart-container"><p class="text-gray-500">Loading chart...</p></div>
@@ -60,13 +54,11 @@
             </div>
         </section>
 
-        <!-- PREDICTOR SECTION -->
         <section id="predictor-section">
              <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Predictive Tool</h2>
             <div class="card w-full max-w-2xl p-8 mx-auto">
                 <form id="prediction-form">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                        <!-- Inputs -->
                         <div>
                             <label for="G2" class="block text-sm font-medium text-gray-700">Second Period Grade (G2)</label>
                             <input type="number" name="G2" id="G2" required min="0" max="20" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="0-20">
@@ -183,4 +175,141 @@
     </script>
 </body>
 </html>
+ -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Performance Predictor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Student Performance Predictor</h1>
+        <p>Welcome! Your application is running. Test the API endpoints below:</p>
+        
+        <div class="test-section">
+            <h3>Test EDA Endpoint</h3>
+            <button onclick="testEDA()">Load EDA Data</button>
+            <div id="eda-result" class="result" style="display:none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test Prediction Endpoint</h3>
+            <button onclick="testPredict()">Test Prediction</button>
+            <div id="predict-result" class="result" style="display:none;"></div>
+        </div>
+    </div>
 
+    <script>
+        async function testEDA() {
+            const resultDiv = document.getElementById('eda-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Loading...';
+            
+            try {
+                const response = await fetch('/api/eda');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `<strong>Success!</strong> EDA data loaded: ${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `<strong>Error:</strong> ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+            }
+        }
+        
+        async function testPredict() {
+            const resultDiv = document.getElementById('predict-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Loading...';
+            
+            // Sample data for testing
+            const testData = {
+                "feature1": 1,
+                "feature2": 2,
+                "feature3": 3
+            };
+            
+            try {
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `<strong>Success!</strong> Prediction: ${data.prediction}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `<strong>Error:</strong> ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

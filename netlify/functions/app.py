@@ -1,84 +1,154 @@
-import flask
-from flask import request, jsonify
+import json
 import joblib
 import pandas as pd
 import os
+from urllib.parse import parse_qs
 
-app = flask.Flask(__name__)
-
+# Global variable to cache the model
 model_data = None
 
-# --- Function to load the model ---
 def load_model():
+    """Load the model once and cache it"""
     global model_data
     if model_data is None:
-        # The path needs to be relative to this app.py file
+        # Get the path relative to this function file
         model_path = os.path.join(os.path.dirname(__file__), 'student_performance_model.pkl')
         
-        # Check if the file exists before trying to load it
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Model file not found at {model_path}")
             
         model_data = joblib.load(model_path)
+    return model_data
 
-# --- EDA Endpoint ---
-@app.route('/api/eda', methods=['GET'])
-def get_eda_data():
+def handler(event, context):
+    """Main Netlify function handler"""
     try:
-        load_model()
-        visualizations = model_data.get('visualizations')
+        # Get HTTP method and path
+        http_method = event.get('httpMethod', 'GET')
+        path = event.get('path', '')
+        
+        # Set CORS headers
+        headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Content-Type': 'application/json'
+        }
+        
+        # Handle preflight OPTIONS request
+        if http_method == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': headers,
+                'body': ''
+            }
+        
+        # Route handling
+        if path.endswith('/eda') and http_method == 'GET':
+            return handle_eda(headers)
+        elif path.endswith('/predict') and http_method == 'POST':
+            return handle_predict(event, headers)
+        else:
+            return {
+                'statusCode': 404,
+                'headers': headers,
+                'body': json.dumps({'error': 'Endpoint not found'})
+            }
+            
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps({'error': 'Internal server error', 'details': str(e)})
+        }
+
+def handle_eda(headers):
+    """Handle EDA endpoint"""
+    try:
+        data = load_model()
+        visualizations = data.get('visualizations')
+        
         if not visualizations:
-            return jsonify({"error": "Visualizations not found in model file."}), 500
-        return jsonify(visualizations)
+            return {
+                'statusCode': 500,
+                'headers': headers,
+                'body': json.dumps({'error': 'Visualizations not found in model file'})
+            }
+        
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps(visualizations)
+        }
         
     except FileNotFoundError as e:
-        return jsonify({"error": "Model file is missing from the deployment package.", "details": str(e)}), 500
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps({'error': 'Model file missing', 'details': str(e)})
+        }
     except Exception as e:
-        # Catch any other unexpected errors during loading or processing
-        return jsonify({"error": "An unexpected error occurred on the server.", "details": str(e)}), 500
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps({'error': 'Error loading EDA data', 'details': str(e)})
+        }
 
-# --- Prediction Endpoint ---
-@app.route('/api/predict', methods=['POST'])
-def predict():
+def handle_predict(event, headers):
+    """Handle prediction endpoint"""
     try:
-        load_model()
-        model = model_data.get('model')
-        if model is None:
-            return jsonify({"error": "Model object not found in pkl file."}), 500
-
-        # Get data from the request
-        data = request.get_json()
-        if data is None:
-            return jsonify({"error": "Invalid JSON input"}), 400
-
-        # Convert to DataFrame for prediction
-        df = pd.DataFrame([data])
+        data = load_model()
+        model = data.get('model')
         
-        # Ensure all required columns are present for the model
-        required_cols = model.feature_names_in_
-        for col in required_cols:
-             if col not in df.columns:
-                 # Add missing columns with a default value if not provided by the form
-                 # This is a simple fix; a more robust solution would handle this more gracefully
-                 df[col] = 0
-
+        if model is None:
+            return {
+                'statusCode': 500,
+                'headers': headers,
+                'body': json.dumps({'error': 'Model object not found in pkl file'})
+            }
+        
+        # Parse request body
+        body = event.get('body', '{}')
+        if isinstance(body, str):
+            request_data = json.loads(body)
+        else:
+            request_data = body
+            
+        if not request_data:
+            return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({'error': 'Invalid JSON input'})
+            }
+        
+        # Convert to DataFrame for prediction
+        df = pd.DataFrame([request_data])
+        
+        # Ensure all required columns are present
+        if hasattr(model, 'feature_names_in_'):
+            required_cols = model.feature_names_in_
+            for col in required_cols:
+                if col not in df.columns:
+                    df[col] = 0
+        
+        # Make prediction
         prediction = model.predict(df)[0]
         
-        return jsonify({'prediction': f'{prediction:.2f}'})
-
-    except FileNotFoundError as e:
-        return jsonify({"error": "Model file is missing from the deployment package.", "details": str(e)}), 500
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({'prediction': f'{prediction:.2f}'})
+        }
+        
+    except json.JSONDecodeError:
+        return {
+            'statusCode': 400,
+            'headers': headers,
+            'body': json.dumps({'error': 'Invalid JSON format'})
+        }
     except Exception as e:
-        return jsonify({"error": "An error occurred during prediction.", "details": str(e)}), 500
-
-# This is required for Netlify to run the Flask app
-# The file is executed as a script, not through a WSGI server
-def handler(event, context):
-    from werkzeug.wrappers import Request, Response
-    from werkzeug.serving import run_simple
-
-    # We need to wrap the Flask app for the serverless environment
-    return run_simple(
-        'localhost', 5000, app, environ=event, start_response=Response
-    )
-
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps({'error': 'Prediction error', 'details': str(e)})
+        }
