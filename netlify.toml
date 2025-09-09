@@ -4,7 +4,7 @@
   functions = "netlify/functions"
 
 [functions]
-  included_files = ["netlify/functions/app.py"]
+  included_files = ["netlify/functions/student_performance_model.pkl"]
 
 [[redirects]]
   from = "/api/*"
